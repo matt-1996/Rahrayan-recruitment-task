@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  single_app:
+    container_name: single_app
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    expose:
+      - 9000
+    volumes:
+      - .:/usr/src/app
+      - ./public:/usr/src/app/public
+    networks:
+      - test_network
+
+  single_nginx:
+    container_name: single_nginx
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    volumes:
+    - ./public:/usr/src/app/public
+    ports:
+      - 8002:8002
+    depends_on:
+      - single_app
+    environment:
+      NGINX_FPM_HOST: sms_app
+      NGINX_ROOT: /usr/src/app/public
+    networks:
+      - test_network
+
+networks:
+  test_network:
+    external: true
+

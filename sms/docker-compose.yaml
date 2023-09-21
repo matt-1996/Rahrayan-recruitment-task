@@ -1,0 +1,64 @@
+version: "3.8"
+services:
+  sms_app:
+    container_name: sms_app
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    expose:
+      - 9000
+    volumes:
+      - .:/usr/src/app
+      - ./public:/usr/src/app/public
+    depends_on:
+      - sms_db
+    networks:
+      - test_network
+
+  sms_nginx:
+    container_name: sms_nginx
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
+    volumes:
+    - ./public:/usr/src/app/public
+    ports:
+      - 80:80
+    depends_on:
+      - sms_app
+    environment:
+      NGINX_FPM_HOST: sms_app
+      NGINX_ROOT: /usr/src/app/public
+    networks:
+      - test_network
+
+  sms_db:
+    container_name: sms_db
+    image: mysql:8.0.20
+    restart: always
+    volumes:
+      - ./storage/db-data:/var/lib/mysql
+    ports:
+      - 3306:3306
+    cap_add:
+      - SYS_NICE
+    environment:
+      MYSQL_DATABASE: sms
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    networks:
+      - test_network
+
+  sms_redis:
+    container_name: sms_redis
+    image: redis:latest
+    ports:
+      - 6380:6380
+    networks:
+      - test_network
+
+networks:
+  test_network:
+    external: true
+
